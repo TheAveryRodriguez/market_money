@@ -52,4 +52,52 @@ RSpec.describe "Vendors API" do
     expect(data[:errors].first).to have_key(:status)
     expect(data[:errors].first).to have_key(:title)
   end
+
+  it "should create a new vendor" do
+    vendor_params = {
+      name: "Satoru Gojo",
+      description: "The annointed one",
+      contact_name: "Gojo Clan Head",
+      contact_phone: "123-456-7890",
+      credit_accepted: true
+    }
+
+    headers = {"CONTENT_TYPE" => "application/json"}
+
+    post "/api/v0/vendors", headers: headers, params: JSON.generate(vendor: vendor_params)
+
+    newest_vendor = Vendor.last
+
+    expect(response).to be_successful
+    expect(response.status).to eq(201)
+    expect(Vendor.count).to eq(1)
+
+    expect(newest_vendor.name).to eq(vendor_params[:name])
+    expect(newest_vendor.description).to eq(vendor_params[:description])
+    expect(newest_vendor.contact_name).to eq(vendor_params[:contact_name])
+    expect(newest_vendor.contact_phone).to eq(vendor_params[:contact_phone])
+    expect(newest_vendor.credit_accepted).to eq(vendor_params[:credit_accepted])
+  end
+
+  it "should not create a new vendor " do
+    vendor_params = {
+      description: "The annointed one",
+      contact_name: "Gojo Clan Head",
+      contact_phone: "123-456-7890",
+      credit_accepted: true
+    }
+
+    headers = {"CONTENT_TYPE" => "application/json"}
+
+    post "/api/v0/vendors", headers: headers, params: JSON.generate(vendor: vendor_params)
+
+    data = JSON.parse(response.body, symbolize_names: true)
+
+    expect(response.status).to eq(400)
+    expect(response).to_not be_successful
+
+    expect(data).to have_key(:errors)
+    expect(data[:errors]).to be_a(Array)
+    expect(data[:errors].first).to eq("Name can't be blank")
+  end
 end
