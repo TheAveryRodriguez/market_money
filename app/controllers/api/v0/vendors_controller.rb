@@ -17,6 +17,15 @@ class Api::V0::VendorsController < ApplicationController
     end
   end
 
+  def update
+    vendor = Vendor.update(params[:id], vendor_params)
+    if vendor.save
+      render(json: VendorSerializer.new(Vendor.update(params[:id], vendor_params)))
+    else
+      render status: 404
+    end
+  end
+
   private
 
   def vendor_params

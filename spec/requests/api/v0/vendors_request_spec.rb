@@ -100,4 +100,41 @@ RSpec.describe "Vendors API" do
     expect(data[:errors]).to be_a(Array)
     expect(data[:errors].first).to eq("Name can't be blank")
   end
+
+  it "should update an existing vendor" do
+    id = create(:vendor).id
+    previous_name = Vendor.last.name
+    vendor_params = {name: "Yuji Itadori"}
+    headers = {"CONTENT_TYPE" => "application/json"}
+
+    patch "/api/v0/vendors/#{id}", headers: headers, params: JSON.generate({vendor: vendor_params})
+    vendor = Vendor.find_by(id: id)
+
+    expect(response).to be_successful
+    expect(vendor.name).to_not eq(previous_name)
+    expect(vendor.name).to eq("Yuji Itadori")
+  end
+
+  it "should not find vendor" do
+    vendor_params = {name: "Yuji Itadori"}
+    headers = {"CONTENT_TYPE" => "application/json"}
+
+    patch "/api/v0/vendors/123123123123", headers: headers, params: JSON.generate({vendor: vendor_params})
+    vendor = Vendor.find_by(id: 123123123123)
+
+    expect(response).to have_http_status(404)
+    expect(response).to_not be_successful
+    expect(response.status).to eq(404)
+    data = JSON.parse(response.body, symbolize_names: true)
+
+    expect(data[:errors]).to be_a(Array)
+    expect(data[:errors].first[:status]).to eq("404")
+    expect(data[:errors].first[:title]).to eq("Couldn't find Vendor with 'id'=123123123123")
+    expect(data).to have_key(:errors)
+    expect(data[:errors].first).to have_key(:status)
+    expect(data[:errors].first).to have_key(:title)
+  end
+
+  it "should fail validation" do
+  end
 end
