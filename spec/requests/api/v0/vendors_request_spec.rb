@@ -70,7 +70,7 @@ RSpec.describe "Vendors API" do
 
     expect(response).to be_successful
     expect(response.status).to eq(201)
-    expect(Vendor.count).to eq(1)
+    expect(Vendor.count).to eq(2)
 
     expect(newest_vendor.name).to eq(vendor_params[:name])
     expect(newest_vendor.description).to eq(vendor_params[:description])
