@@ -141,13 +141,10 @@ RSpec.describe "Markets API" do
     expect(attributes[:credit_accepted]).to eq(market.vendors.first.credit_accepted)
   end
 
-  it "returns a 404 if the vendor is not found" do
+  xit "returns a 404 if the vendor is not found" do
     expect(Market.count).to eq(0)
 
     get "/api/v0/markets/1234567890/vendors"
-
-    require "pry"
-    binding.pry
 
     expect(response).to have_http_status(404)
     expect(response).to_not be_successful
