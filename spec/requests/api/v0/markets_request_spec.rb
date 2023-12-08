@@ -158,4 +158,21 @@ RSpec.describe "Markets API" do
     expect(data[:errors].first).to have_key(:status)
     expect(data[:errors].first).to have_key(:title)
   end
+
+  xit "can search for a market" do
+    create_list(:market, 7)
+
+    get "/api/v0/markets/search", params: {city: Market.first.city, state: Market.first.state}
+
+    expect(response).to have_http_status(:ok)
+
+    data = JSON.parse(response.body, symbolize_names: true)
+
+    expect(data[:data]).to be_a(Array)
+    expect(data[:data].length).to eq(1)
+    expect(data[:data].first[:id]).to eq(market.first.id)
+    expect(data[:data].first[:attributes][:name]).to eq(market.first.name)
+    expect(data[:data].first[:attributes][:city]).to eq(market.first.city)
+    expect(data[:data].first[:attributes][:state]).to eq(market.first.state)
+  end
 end
