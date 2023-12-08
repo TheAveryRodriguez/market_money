@@ -115,7 +115,7 @@ RSpec.describe "Vendors API" do
     expect(vendor.name).to eq("Yuji Itadori")
   end
 
-  it "should not find vendor" do
+  it "should fail to update bc it can not find the vendor" do
     vendor_params = {name: "Yuji Itadori"}
     headers = {"CONTENT_TYPE" => "application/json"}
 
@@ -135,6 +135,51 @@ RSpec.describe "Vendors API" do
     expect(data[:errors].first).to have_key(:title)
   end
 
-  it "should fail validation" do
+  it "should fail validation when updating without an attribute" do
+    id = create(:vendor).id
+    previous_name = Vendor.last.name
+    vendor_params = {name: ""}
+    headers = {"CONTENT_TYPE" => "application/json"}
+
+    patch "/api/v0/vendors/#{id}", headers: headers, params: JSON.generate({vendor: vendor_params})
+
+    vendor = Vendor.find_by(id: id)
+
+    data = JSON.parse(response.body, symbolize_names: true)
+
+    expect(response.status).to eq(400)
+    expect(response).to_not be_successful
+
+    expect(data[:errors]).to be_a(Array)
+    expect(data).to have_key(:errors)
+    expect(data[:errors].first).to eq("Name can't be blank")
+  end
+
+  it "should delete vendor" do
+    vendor = create(:vendor)
+
+    expect(Vendor.count).to eq(1)
+
+    delete "/api/v0/vendors/#{vendor.id}"
+
+    expect(response).to be_successful
+    expect(Vendor.count).to eq(0)
+    expect { Vendor.find(vendor.id) }.to raise_error(ActiveRecord::RecordNotFound)
+  end
+
+  it "returns a 404 if the vendor is not found" do
+    delete "/api/v0/vendors/987654321"
+
+    expect(response).to have_http_status(404)
+    expect(response).to_not be_successful
+    expect(response.status).to eq(404)
+    data = JSON.parse(response.body, symbolize_names: true)
+
+    expect(data[:errors]).to be_a(Array)
+    expect(data[:errors].first[:status]).to eq("404")
+    expect(data[:errors].first[:title]).to eq("Couldn't find Vendor with 'id'=987654321")
+    expect(data).to have_key(:errors)
+    expect(data[:errors].first).to have_key(:status)
+    expect(data[:errors].first).to have_key(:title)
   end
 end

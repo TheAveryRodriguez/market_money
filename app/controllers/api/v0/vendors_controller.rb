@@ -1,6 +1,7 @@
 class Api::V0::VendorsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found_response
   def index
+    market = Market.find(params[:market_id])
     render json: VendorSerializer.new(Vendor.all)
   end
 
@@ -22,8 +23,12 @@ class Api::V0::VendorsController < ApplicationController
     if vendor.save
       render(json: VendorSerializer.new(Vendor.update(params[:id], vendor_params)))
     else
-      render status: 404
+      render json: {errors: vendor.errors.full_messages}, status: :bad_request
     end
+  end
+
+  def destroy
+    render(json: Vendor.find(params[:id]).destroy)
   end
 
   private
