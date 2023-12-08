@@ -2,26 +2,36 @@ class Api::V0::MarketVendorsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found_response
 
   def create
-    market = Market.find(params[:id])
-    vendor = Vendor.find(params[:id])
+    market_id = params[:market_id]
+    vendor_id = params[:vendor_id]
 
-    market_vendor = MarketVendor.create(market_vendor_params)
-
-    if market_vendor.save
-      render(json: MarketVendorSerializer.new(MarketVendor.create(market_vendor_params)), status: 201)
+    if market_id.blank? || vendor_id.blank?
+      render json: {message: "Validation failed: Market can't be blank, Vendor can't be blank"}, status: :bad_request
     else
-      render json: {errors: vendor.errors.full_messages}, status: :bad_request
+      begin
+        market = Market.find(market_id)
+        vendor = Vendor.find(vendor_id)
+
+        raise ActiveRecord::RecordNotUnique if MarketVendor.where(market: market, vendor: vendor).exists?
+
+        MarketVendor.create!(market: market, vendor: vendor)
+        render json: {message: "Successfully added venfor to market"}, status: :created
+      rescue ActiveRecord::RecordInvalid => exception
+        render json: ErrorSerializer.new(ErrorMessage.new(exception.message, :unprocessable_entity)).serialize, status: 404
+      rescue ActiveRecord::RecordNotUnique => exception
+        render json: ErrorSerializer.new(ErrorMessage.new("Market Vendor with the same market_id and vendor_id already exists"))
+      end
     end
   end
 
   def destroy
-    render(json: Vendor.find(params[:id]).destroy)
+    render(json: MarketVendor.find(params[:id]).destroy)
   end
 
   private
 
   def market_vendor_params
-    params.require(:vendor).permit(:name, :description, :contact_name, :contact_phone, :credit_accepted)
+    params.require(:market_vendor).permit(:market_id, :vendor_id)
   end
 
   def not_found_response(exception)
